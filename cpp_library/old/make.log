@@ -1,0 +1,1 @@
+g++ -fopenmp -g   -DNDEBUG -DUSE_BLAS_LIB -I. -I linalg/ -I decomp/ -I prox -I dictLearn -v    test_lasso.cpp   -o test_lasso
