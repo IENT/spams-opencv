@@ -1,5 +1,5 @@
 #include "linalg.h"
-#include "old/cppspams.h"
+#include "cppspams.h"
 
 int main(int argc, char** argv) {
    int m = 10;

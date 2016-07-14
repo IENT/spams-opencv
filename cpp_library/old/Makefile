@@ -1,13 +1,13 @@
-TARGETS= test_lasso
-LIBS= -lstdc++ -lblas -llapack -L build/ -l mexTrainDL.mexa64 
-SRCS= test_lasso.cpp
+TARGETS= cppLasso
+LIBS= -lstdc++ -lblas -llapack
+SRCS= cppLasso.cpp
 
 #HEADERS= spams.h cppspams.h ../linalg/misc.h ../linalg/cblas_template.h \
 	linalg/linalg.h \
        	decomp/decomp.h 
 
-INCLUDE+=-I. -I linalg/ -I decomp/ -I prox/ -I dictLearn/
-CXXFLAGS = -fopenmp -g   -DNDEBUG -DUSE_BLAS_LIB $(INCLUDE) -v
+INCLUDE+=-I ../ -I ../linalg/ -I ../decomp/ -I ../prox/ -I ../dictLearn/
+CXXFLAGS = -fopenmp -g   -DNDEBUG -DUSE_BLAS_LIB $(INCLUDE)
 
 all: depend $(TARGETS)
 	
@@ -19,7 +19,7 @@ clean:
 %.o : %.cpp 
 	$(CXX) -c $(CXXFLAGS) $<
 
-bin/test_decomp: test_decomp.o 
+bin/out: out.o 
 	$(CXX) $(CXXFLAGS) -o $@  $< $(LIBS)
 
 # Dependencies
