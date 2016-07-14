@@ -81,9 +81,7 @@ void test_lasso() {
     delete spa;
 }
 
-void test_image() {
-    int channels = 1;
-    
+void test_scale() {
     // Copied from opencv doc and adapted
     Mat image = imread("../data/boat.png", CV_LOAD_IMAGE_GRAYSCALE);
 
@@ -91,24 +89,26 @@ void test_image() {
         cout <<  "Could not open or find the image" << std::endl;
         return;
     }
-
+    
+    // Convert to double as SPAMS Image uses cblas under the hood and it
+    // requires double
     int l1 = image.cols * image.rows * image.channels();
     double p1[l1];
     for(int i = 0; i < l1; i++) {
         p1[i] = (double) image.data[i];
-//        cout << image.data[i] << " -> " << p1[i] << std::endl;
     }
 
     Image<double> I(p1, image.cols, image.rows, 
                            image.channels());
     
+    // Scale dynamic to test some SPAMS Image function
     I.scal(0.5);
     
+    // Reconvert to unsigned char to display it with opencv
     int l2 = I.width() * I.height() * image.channels();
     unsigned char p2[l2];
     for(int i = 0; i < l2; i++) {
         p2[i] = (unsigned char) I.rawX()[i];
-//        cout << I.rawX()[i] << " -> " << p2[i] << std::endl;
     }
     
     Mat output(I.width(), I.height(), CV_LOAD_IMAGE_GRAYSCALE, p2);
@@ -121,6 +121,10 @@ void test_image() {
     waitKey(0);                                          // Wait for a keystroke in the window
 }
 
+void test_image() {
+
+}
+
 struct progs {
   const char *name;
   void (*prog)();
@@ -128,6 +132,7 @@ struct progs {
     "omp", test_omp,
     "lasso", test_lasso,
     "image", test_image,
+    "scale", test_scale,
 };
 int main(int argc, char** argv) {
     for(int i = 1;i < argc;i++) {
