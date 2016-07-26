@@ -33,3 +33,5 @@ s (26 sloc) 270 Bytes
 *.app
 
 *~
+
+cpp_library/bin/*
