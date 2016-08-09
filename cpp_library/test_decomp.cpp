@@ -81,25 +81,55 @@ void test_lasso() {
     delete spa;
 }
 
+void test() {
+    Mat image = imread("../data/blackwhite.png", CV_LOAD_IMAGE_GRAYSCALE);
 
-Image<double>* read_image(char* filepath) {
-    Mat image = imread(filepath, 0);
+    if(! image.data) {
+        cout <<  "Could not open or find the image" << std::endl;
+        return;
+    }
+
+    int l1 = image.cols * image.rows * image.channels();
+    double p1[l1];
+    for(int i = 0; i < l1; i++) {
+        p1[i] = (double) image.data[i];
+    }
+
+    Image<double> I(p1, image.cols, image.rows, image.channels());
+
+    I.scal(0.5);
+
+    int l2 = I.width() * I.height() * image.channels();
+    unsigned char p2[l2];
+    for(int i = 0; i < l2; i++) {
+        p2[i] = (unsigned char) I.rawX()[i];
+    }
+
+    Mat output(I.height(), I.width(), CV_LOAD_IMAGE_GRAYSCALE, p2);
+
+    namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
+    imshow("Display window", output);                   // Show our image inside it.
+
+    waitKey(0);                                          // Wait for a keystroke in the window
+}
+
+Image<double> read_image(char* filepath) {
+    Mat image = imread(filepath, CV_LOAD_IMAGE_GRAYSCALE);
 
     if(! image.data) {
         cout <<  "Could not open or find the image" << std::endl;
     }
-    //tESTWURST
 
     // Convert to double as SPAMS Image uses cblas under the hood and it
     // requires double
-    int l = image.cols * image.rows * image.channels() * 2;
-    cout << image.cols << " " << image.rows << " " << image.channels() << std::endl;
+    int l = image.cols * image.rows * image.channels();
     double array[l];
     for(int i = 0; i < l; i++) {
         array[i] = (double) image.data[i];
     }
 
-    return new Image<double>(array, image.cols, image.rows, image.channels());
+//    Image<double> ;
+    return Image<double>::Image<double>(array, image.cols, image.rows, image.channels());
 }
 
 void display_image(Image<double>* image) {
@@ -118,19 +148,19 @@ void display_image(Image<double>* image) {
     waitKey(0);
 }
 
-void test_image_scale() {
-    Image<double>* image = read_image("../data/boat.png");
-    
-    // Scale dynamic to test some SPAMS Image function
-    image->scal(0.25);
-    
-    display_image(image);
-}
-
-void test_image() {
-    Image<double>* image = read_image("../data/boat.png");
-    display_image(image);
-}
+//void test_image_scale() {
+//    Image<double> image = read_image("../data/blackwhite.png");
+//    
+//    // Scale dynamic to test some SPAMS Image function
+//    image.scal(0.25);
+//    
+//    display_image(&image);
+//}
+//
+//void test_image() {
+//    Image<double> image = read_image("../data/boat.png");
+//    display_image(&image);
+//}
 
 struct progs {
   const char *name;
@@ -138,8 +168,8 @@ struct progs {
 } progs[] = {
     "omp", test_omp,
     "lasso", test_lasso,
-    "image", test_image,
-    "scale", test_image_scale,
+//    "image", test_image,
+//    "scale", test,
 };
 int main(int argc, char** argv) {
     for(int i = 1;i < argc;i++) {
