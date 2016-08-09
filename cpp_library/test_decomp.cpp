@@ -52,8 +52,6 @@ void test_lasso() {
     //initialized easily. The mapping of the array is column major ie. the 
     //arrays have to be initialized 'transposed'!
     
-    //TODO: Is there an easier way for initialization?
-
     double prD[m*p] = { 2, 1.8, 0.5 };    
     Matrix<double> D(prD, m, p);
 
@@ -81,7 +79,7 @@ void test_lasso() {
     delete spa;
 }
 
-void test() {
+void test_image() {
     Mat image = imread("../data/blackwhite.png", CV_LOAD_IMAGE_GRAYSCALE);
 
     if(! image.data) {
@@ -107,60 +105,11 @@ void test() {
 
     Mat output(I.height(), I.width(), CV_LOAD_IMAGE_GRAYSCALE, p2);
 
-    namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
-    imshow("Display window", output);                   // Show our image inside it.
-
-    waitKey(0);                                          // Wait for a keystroke in the window
-}
-
-Image<double> read_image(char* filepath) {
-    Mat image = imread(filepath, CV_LOAD_IMAGE_GRAYSCALE);
-
-    if(! image.data) {
-        cout <<  "Could not open or find the image" << std::endl;
-    }
-
-    // Convert to double as SPAMS Image uses cblas under the hood and it
-    // requires double
-    int l = image.cols * image.rows * image.channels();
-    double array[l];
-    for(int i = 0; i < l; i++) {
-        array[i] = (double) image.data[i];
-    }
-
-//    Image<double> ;
-    return Image<double>::Image<double>(array, image.cols, image.rows, image.channels());
-}
-
-void display_image(Image<double>* image) {
-    // Reconvert to unsigned char to display it with opencv
-    int l = image->width() * image->height() * image->numChannels();
-    unsigned char array[l];
-    for(int i = 0; i < l; i++) {
-        array[i] = (unsigned char) image->rawX()[i];
-    }
-    
-    Mat output(image->height(), image->width(), CV_LOAD_IMAGE_GRAYSCALE, array);
-    
-    namedWindow( "Image", WINDOW_AUTOSIZE );
-    imshow("Image", output);
+    namedWindow( "Display window", WINDOW_AUTOSIZE );
+    imshow("Display window", output);
 
     waitKey(0);
 }
-
-//void test_image_scale() {
-//    Image<double> image = read_image("../data/blackwhite.png");
-//    
-//    // Scale dynamic to test some SPAMS Image function
-//    image.scal(0.25);
-//    
-//    display_image(&image);
-//}
-//
-//void test_image() {
-//    Image<double> image = read_image("../data/boat.png");
-//    display_image(&image);
-//}
 
 struct progs {
   const char *name;
@@ -168,8 +117,7 @@ struct progs {
 } progs[] = {
     "omp", test_omp,
     "lasso", test_lasso,
-//    "image", test_image,
-//    "scale", test,
+    "scale", test_image,
 };
 int main(int argc, char** argv) {
     for(int i = 1;i < argc;i++) {
