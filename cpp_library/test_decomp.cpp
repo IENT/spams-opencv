@@ -20,6 +20,8 @@ float delta_t(struct timespec &t1,struct timespec &t2) {
   return t;
 }
 
+static const string TEST_IMAGE_PATH = "../data/boat.png";
+
 
 void test_omp() {
   std::cout << "OMP" << std::endl;
@@ -79,34 +81,71 @@ void test_lasso() {
     delete spa;
 }
 
+Image<double>* cv2spams(Mat image) {
+    Image<double>* spams_image = new Image<double>(image.cols, image.rows, image.channels());
+	
+    //Manually copy data to spams image
+    double* X = spams_image->rawX();
+    int l = image.cols * image.rows * image.channels();
+    for(int i = 0; i < l; i++) {
+        X[i] = (double) image.data[i];
+    }
+    
+    return spams_image;
+}
+
+Mat spams2cv(Image<double>* image) {
+	Mat cv_image(image->height(), image->width(), image->numChannels());
+	
+    //Manually copy data to spams image
+	int l = image->width() * image->height() * image->numChannels();
+	for(int i = 0; i < l; i++) {
+		cv_image.data[i] = (*image)[i];
+	}
+	
+    return cv_image;
+}
+
+template<typename T> class SpamsImage : public Image<T> {
+	public: 
+		/// Constructor_ind
+		SpamsImage(INTM w, INTM h, INTM numChannels = 1) : Image<T>(w, h, numChannels) {};
+		
+		/// Constructor with existing data 
+		SpamsImage(T* X, INTM w, INTM h, INTM numChannels = 1) 
+			: Image<T>(X, w,h, numChannels) {};
+		/// Empty constructor
+		SpamsImage();
+	
+		/// Destructor
+		~SpamsImage();
+};
+
+SpamsImage<double> test() {
+	return SpamsImage<double>(10, 10, 1);
+}
+
+Image<double>* readImage(string filepath) {
+    Mat cv_input = imread(filepath, CV_LOAD_IMAGE_GRAYSCALE);
+
+    if(! cv_input.data) {
+        throw "Could not open or find the image";
+    }
+    cv_input.convertTo(cv_input, )
+    
+	return cv2spams(cv_input);
+}
+
 void test_image() {
-    Mat image = imread("../data/blackwhite.png", CV_LOAD_IMAGE_GRAYSCALE);
+    Image<double>* image = readImage(TEST_IMAGE_PATH);
 
-    if(! image.data) {
-        cout <<  "Could not open or find the image" << std::endl;
-        return;
-    }
+    image->scal(0.5);
 
-    int l1 = image.cols * image.rows * image.channels();
-    double p1[l1];
-    for(int i = 0; i < l1; i++) {
-        p1[i] = (double) image.data[i];
-    }
-
-    Image<double> I(p1, image.cols, image.rows, image.channels());
-
-    I.scal(0.5);
-
-    int l2 = I.width() * I.height() * image.channels();
-    unsigned char p2[l2];
-    for(int i = 0; i < l2; i++) {
-        p2[i] = (unsigned char) I.rawX()[i];
-    }
-
-    Mat output(I.height(), I.width(), CV_LOAD_IMAGE_GRAYSCALE, p2);
-
+    Mat cv_output = spams2cv(image);
+    cv_output.convertTo(cv_output, CV_8UC1);
+    
     namedWindow( "Display window", WINDOW_AUTOSIZE );
-    imshow("Display window", output);
+    imshow("Display window", cv_output);
 
     waitKey(0);
 }
