@@ -20,7 +20,9 @@ float delta_t(struct timespec &t1,struct timespec &t2) {
   return t;
 }
 
-static const string TEST_IMAGE_PATH = "../data/boat.png";
+//static const string TEST_IMAGE_PATH = "../data/boat.png";
+//static const string TEST_IMAGE_PATH = "../data/boat.png";
+static const string TEST_IMAGE_PATH = "../data/blackwhite_small.png";
 
 
 void test_omp() {
@@ -100,29 +102,10 @@ Mat spams2cv(Image<double>* image) {
     //Manually copy data to spams image
 	int l = image->width() * image->height() * image->numChannels();
 	for(int i = 0; i < l; i++) {
-		cv_image.data[i] = (*image)[i];
+		cv_image.data[i] = (double) (*image)[i];
 	}
 	
     return cv_image;
-}
-
-template<typename T> class SpamsImage : public Image<T> {
-	public: 
-		/// Constructor_ind
-		SpamsImage(INTM w, INTM h, INTM numChannels = 1) : Image<T>(w, h, numChannels) {};
-		
-		/// Constructor with existing data 
-		SpamsImage(T* X, INTM w, INTM h, INTM numChannels = 1) 
-			: Image<T>(X, w,h, numChannels) {};
-		/// Empty constructor
-		SpamsImage();
-	
-		/// Destructor
-		~SpamsImage();
-};
-
-SpamsImage<double> test() {
-	return SpamsImage<double>(10, 10, 1);
 }
 
 Image<double>* readImage(string filepath) {
@@ -131,20 +114,20 @@ Image<double>* readImage(string filepath) {
     if(! cv_input.data) {
         throw "Could not open or find the image";
     }
-    cv_input.convertTo(cv_input, )
+    cv_input.convertTo(cv_input, CV_64F);
     
 	return cv2spams(cv_input);
 }
 
-void test_image() {
+void test_scale() {
     Image<double>* image = readImage(TEST_IMAGE_PATH);
 
     image->scal(0.5);
 
     Mat cv_output = spams2cv(image);
-    cv_output.convertTo(cv_output, CV_8UC1);
+    cv_output.convertTo(cv_output, CV_8U);
     
-    namedWindow( "Display window", WINDOW_AUTOSIZE );
+    namedWindow("Display window", WINDOW_NORMAL);
     imshow("Display window", cv_output);
 
     waitKey(0);
@@ -156,7 +139,7 @@ struct progs {
 } progs[] = {
     "omp", test_omp,
     "lasso", test_lasso,
-    "scale", test_image,
+    "scale", test_scale,
 };
 int main(int argc, char** argv) {
     for(int i = 1;i < argc;i++) {
