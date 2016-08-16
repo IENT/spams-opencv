@@ -20,9 +20,9 @@ float delta_t(struct timespec &t1,struct timespec &t2) {
   return t;
 }
 
-//static const string TEST_IMAGE_PATH = "../data/boat.png";
-//static const string TEST_IMAGE_PATH = "../data/boat.png";
-static const string TEST_IMAGE_PATH = "../data/blackwhite_small.png";
+static const string TEST_IMAGE_PATH = "../data/boat.png";
+//static const string TEST_IMAGE_PATH = "../data/blackwhite.png";
+//static const string TEST_IMAGE_PATH = "../data/blackwhite_small.png";
 
 
 void test_omp() {
@@ -90,6 +90,7 @@ Image<double>* cv2spams(Mat image) {
     double* X = spams_image->rawX();
     int l = image.cols * image.rows * image.channels();
     for(int i = 0; i < l; i++) {
+//    	cout << (double) image.data[i] << std::endl;
         X[i] = (double) image.data[i];
     }
     
@@ -114,7 +115,8 @@ Image<double>* readImage(string filepath) {
     if(! cv_input.data) {
         throw "Could not open or find the image";
     }
-    cv_input.convertTo(cv_input, CV_64F);
+    //Astonishingly, this breaks everything
+//    cv_input.convertTo(cv_input, CV_64F);
     
 	return cv2spams(cv_input);
 }
@@ -122,7 +124,7 @@ Image<double>* readImage(string filepath) {
 void test_scale() {
     Image<double>* image = readImage(TEST_IMAGE_PATH);
 
-    image->scal(0.5);
+//    image->scal(0.5);
 
     Mat cv_output = spams2cv(image);
     cv_output.convertTo(cv_output, CV_8U);
