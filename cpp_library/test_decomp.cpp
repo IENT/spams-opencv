@@ -20,7 +20,7 @@ float delta_t(struct timespec &t1,struct timespec &t2) {
   return t;
 }
 
-//static const string TEST_IMAGE_PATH = "../data/boat.png";
+static const string TEST_IMAGE_PATH = "../data/boat.png";
 //static const string TEST_IMAGE_PATH = "../data/blackwhite.png";
 //static const string TEST_IMAGE_PATH = "../data/blackwhite_small.png";
 
@@ -89,7 +89,6 @@ template<typename I, typename O> Image<O> cv2spams(Mat_<I> image) {
     //Manually copy data to spams image
     int l = image.cols * image.rows * image.channels();
     for(int i = 0; i < l; i++) {
-    	cout << image(i) << std::endl;
     	(spams_image.rawX())[i] = (O) image(i);
     }
     
@@ -122,14 +121,12 @@ template<typename T> Image<T> readImage(string filepath) {
 void test_scale() {
     Image<double> image = readImage<double>(TEST_IMAGE_PATH);
 
-//    image.scal(0.5);
+    image.scal(0.75);
 
     Mat cv_output = spams2cv<double, unsigned char>(image);
-//    cv_output.convertTo(cv_output, CV_8UC1);
 
     namedWindow("Display window", WINDOW_NORMAL);
     imshow("Display window", cv_output);
-//
     waitKey(0);
 }
 
