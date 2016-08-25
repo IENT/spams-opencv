@@ -20,9 +20,9 @@ float delta_t(struct timespec &t1,struct timespec &t2) {
   return t;
 }
 
-static const string TEST_IMAGE_PATH = "../data/boat.png";
+//static const string TEST_IMAGE_PATH = "../data/boat.png";
 //static const string TEST_IMAGE_PATH = "../data/blackwhite.png";
-//static const string TEST_IMAGE_PATH = "../data/blackwhite_small.png";
+static const string TEST_IMAGE_PATH = "../data/blackwhite_small.png";
 
 
 void test_omp() {
@@ -130,6 +130,17 @@ void test_scale() {
     waitKey(0);
 }
 
+void test_patches() {
+	Image<double> image = readImage<double>(TEST_IMAGE_PATH);
+
+	Matrix<double> X;
+	image.extractPatches(X, 2, 2);
+
+	std:cout  << std::endl;
+	X.print("Matrix X");
+	std::cout  << std::endl;
+}
+
 struct progs {
   const char *name;
   void (*prog)();
@@ -137,6 +148,7 @@ struct progs {
     "omp", test_omp,
     "lasso", test_lasso,
     "scale", test_scale,
+	"patches", test_patches,
 };
 int main(int argc, char** argv) {
     for(int i = 1;i < argc;i++) {
