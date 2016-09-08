@@ -139,12 +139,45 @@ void test_patches() {
 		TEST_IMAGE_PATHS.at("boat")
 	);
 
-	Matrix<double> X;
-	image.extractPatches(X, 2, 2);
 
-	std:cout  << std::endl;
-	X.print("Matrix X");
-	std::cout  << std::endl;
+	int step = 20, patch_size = 20;
+
+	Matrix<double> patches;
+	spams_image.extractPatches(patches, patch_size, step);
+
+	//Print patch matrices for small images
+	if(spams_image.width() <= 20) {
+		std:cout  << patches.m() << std::endl << patches.n() << std::endl;
+		patches.print("Untransformed Patches");
+		std::cout  << std::endl;
+	}
+
+	//Set every second patch to white
+	for(int x = 0; x < patches.n(); x++) {
+		if(x % 2 == 0) {
+			for(int y = 0; y < patches.m(); y++) {
+				patches(y, x) = 255;
+			}
+		}
+	}
+
+	//Print transformed patch matrices for small images
+	if(spams_image.width() <= 20) {
+		std::cout  << std::endl;
+		patches.print("Transformed Patches");
+		std::cout  << std::endl;
+	}
+
+	//Interpolate 1 to 1 between the patches and the original image
+	//resulting in a chess board type effect
+	spams_image.combinePatches(patches, 1, step, true);
+
+	//Convert to cv image and render
+    Mat cv_image = spams2cv<double, unsigned char>(spams_image);
+
+    namedWindow("Display window", WINDOW_NORMAL);
+    imshow("Display window", cv_image);
+    waitKey(0);
 }
 
 struct progs {
