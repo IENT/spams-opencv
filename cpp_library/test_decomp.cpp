@@ -1,4 +1,3 @@
-#include "cppspams.h"
 #include "image.h"
 
 #include <time.h>
@@ -27,63 +26,7 @@ std::map<std::string, std::string> TEST_IMAGE_PATHS = {
     { "grayscale_medium", "../data/blackwhite_medium.png" }
 };
 
-void test_omp() {
-  std::cout << "OMP" << std::endl;
-  int m(64), n(100000), p(200);
-   Matrix<double> X(m,n);
-   X.setAleat();
-   double* prD = new double[m*p];
-   Matrix<double> D(prD,m,p); 
-   D.setAleat(); 
-   D.normalize();
-   const int L = 10;
-   double eps = 1.0;
-   double lambda = 0.;
-   SpMatrix<double> spa;
-   clock_gettime(CLOCK_REALTIME,&tstart);
-   cppOMP(X,D,spa,&L,&eps,&lambda);
-   clock_gettime(CLOCK_REALTIME,&tend);
-   float nbs = X.n() / delta_t(tstart,tend);
-   std::cout << nbs << " signals processed per second." << std::endl;
-   delete[](prD);
 
-}
-
-void test_lasso() {
-    int m = 3;
-    int n = 4;
-    int p = 1;
-    
-    //Static allocation for matrices is used, so that matrices can be
-    //initialized easily. The mapping of the array is column major ie. the 
-    //arrays have to be initialized 'transposed'!
-    
-    double prD[m*p] = { 2, 1.8, 0.5 };    
-    Matrix<double> D(prD, m, p);
-
-    double prX[m*n] = { 1, 1, 0
-                      , 2, 2, 1
-                      , 3, 3, 2
-                      , 4, 4, 0
-                      };
-    Matrix<double> X(prX, m, n);
-
-    //Create empty sparse matrix
-    Matrix<double> *path;
-
-
-    SpMatrix<double> *spa = cppLasso(X, D, &path, false, 10, 0.15);
-
-    std::cout << "Lasso algorithm completed:" << std::endl << std::endl;
-    D.print("Matrix D");
-    std:cout  << std::endl;
-    X.print("Matrix X");
-    std::cout  << std::endl;
-    spa->print("Result Matrix");
-    std::cout << std::endl;
-    
-    delete spa;
-}
 
 template<typename I, typename O> Image<O> cv2spams(Mat_<I> image) {
     Image<O> spams_image(image.cols, image.rows, image.channels());
@@ -184,8 +127,6 @@ struct progs {
   const char *name;
   void (*prog)();
 } progs[] = {
-    "omp", test_omp,
-    "lasso", test_lasso,
     "scale", test_scale,
 	"patches", test_patches,
 };
