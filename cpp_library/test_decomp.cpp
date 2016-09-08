@@ -28,55 +28,73 @@ std::map<std::string, std::string> TEST_IMAGE_PATHS = {
 
 
 
-template<typename I, typename O> Image<O> cv2spams(Mat_<I> image) {
-    Image<O> spams_image(image.cols, image.rows, image.channels());
+Image<double> cv2spams(Mat image) {
+	// Check if the provided cv image is a valid input
+	if(image.channels() != 1) {
+		throw "Cannot convert cv image with more than one channel to spams";
+	}
+	if(image.type() != CV_64F) {
+		throw "Can only convert CV_64F ie. double images to spams";
+	}
+
+    Image<double> spams_image(image.cols, image.rows);
 	
     //Manually copy data to spams image
-    int l = image.cols * image.rows * image.channels();
+    int l = image.cols * image.rows;
     for(int i = 0; i < l; i++) {
-    	(spams_image.rawX())[i] = (O) image(i);
+    	(spams_image.rawX())[i] = image.at<double>(i);
     }
     
     return spams_image;
 }
 
-template<typename I, typename O> Mat_<O> spams2cv(Image<I> image) {
-	Mat_<O> cv_image(image.height(), image.width());
+Mat spams2cv(Image<double> image) {
+	// Check if the provided spams image is a valid input
+	if(image.numChannels() != 1) {
+		throw "Cannot convert spams image with more than one channel to cv";
+	}
+
+	Mat cv_image(image.height(), image.width(), CV_64F);
+
 	//Manually copy data to spams image
-	int l = image.width() * image.height() * image.numChannels();
+	int l = image.width() * image.height();
 	for(int i = 0; i < l; i++) {
-		cv_image(i) = (O) image[i];
+		cv_image.at<double>(i) = image[i];
 	}
 	
     return cv_image;
 }
 
-template<typename T> Image<T> readImage(string filepath) {
-    Mat cv_input = imread(filepath, -1);
+Image<double> readTestSpamsImage(string filepath) {
+    Mat cv_image = imread(filepath, -1);
 
-    if(cv_input.empty()) {
-        throw "Could not open or find the image";
+    if(cv_image.empty()) {
+        throw "Could not open or find the cv image";
     }
-    //TODO template function correctly or removed it
-    cv_input.convertTo(cv_input, CV_64F);
+    cv_image.convertTo(cv_image, CV_64F);
     
-	return cv2spams<T, T>(cv_input);
+	return cv2spams(cv_image);
 }
 
-void test_scale() {
-    Image<double> image = readImage<double>(TEST_IMAGE_PATHS.at("boat"));
-
-    image.scal(0.75);
-
-    Mat cv_output = spams2cv<double, unsigned char>(image);
+void displayTestSpamsImage(Image<double> spams_image) {
+    Mat cv_image = spams2cv(spams_image);
+    cv_image.convertTo(cv_image, CV_8U);
 
     namedWindow("Display window", WINDOW_NORMAL);
-    imshow("Display window", cv_output);
+    imshow("Display window", cv_image);
     waitKey(0);
 }
 
+void test_scale() {
+    Image<double> image = readTestSpamsImage(TEST_IMAGE_PATHS.at("boat"));
+
+    image.scal(0.75);
+
+    displayTestSpamsImage(image);
+}
+
 void test_patches() {
-	Image<double> spams_image = readImage<double>(
+	Image<double> spams_image = readTestSpamsImage(
 		// Use big image as it seems that the patch functions have
 		// problems with very small images or patch sizes
 		TEST_IMAGE_PATHS.at("boat")
@@ -116,11 +134,7 @@ void test_patches() {
 	spams_image.combinePatches(patches, 1, step, true);
 
 	//Convert to cv image and render
-    Mat cv_image = spams2cv<double, unsigned char>(spams_image);
-
-    namedWindow("Display window", WINDOW_NORMAL);
-    imshow("Display window", cv_image);
-    waitKey(0);
+	displayTestSpamsImage(spams_image);
 }
 
 struct progs {
