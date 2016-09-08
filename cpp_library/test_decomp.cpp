@@ -20,10 +20,12 @@ float delta_t(struct timespec &t1,struct timespec &t2) {
   return t;
 }
 
-//static const string TEST_IMAGE_PATH = "../data/boat.png";
-//static const string TEST_IMAGE_PATH = "../data/blackwhite.png";
-static const string TEST_IMAGE_PATH = "../data/blackwhite_small.png";
-
+std::map<std::string, std::string> TEST_IMAGE_PATHS = {
+    { "boat", "../data/boat.png" },
+    { "grayscale_big", "../data/blackwhite.png" },
+    { "grayscale_small", "../data/blackwhite_small.png" },
+    { "grayscale_medium", "../data/blackwhite_medium.png" }
+};
 
 void test_omp() {
   std::cout << "OMP" << std::endl;
@@ -119,7 +121,7 @@ template<typename T> Image<T> readImage(string filepath) {
 }
 
 void test_scale() {
-    Image<double> image = readImage<double>(TEST_IMAGE_PATH);
+    Image<double> image = readImage<double>(TEST_IMAGE_PATHS.at("boat"));
 
     image.scal(0.75);
 
@@ -131,7 +133,11 @@ void test_scale() {
 }
 
 void test_patches() {
-	Image<double> image = readImage<double>(TEST_IMAGE_PATH);
+	Image<double> spams_image = readImage<double>(
+		// Use big image as it seems that the patch functions have
+		// problems with very small images or patch sizes
+		TEST_IMAGE_PATHS.at("boat")
+	);
 
 	Matrix<double> X;
 	image.extractPatches(X, 2, 2);
