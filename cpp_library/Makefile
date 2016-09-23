@@ -1,12 +1,12 @@
 TARGETS= bin/test_decomp
-LIBS= -lstdc++ -lblas -llapack -L ../../opencv-2.4.13/bin/ -L ../../opencv-2.4.13/lib/ -lopencv_core -lopencv_highgui
+LIBS= -lstdc++ -lblas -llapack -L ../../opencv-2.4.13/bin/ -L ../../opencv-2.4.13/lib/ -lopencv_core -lopencv_highgui -lopencv_imgproc
 SRCS= test_decomp.cpp
 
 #HEADERS= spams.h cppspams.h ../linalg/misc.h ../linalg/cblas_template.h \
 	../linalg/linalg.h \
        	../decomp/decomp.h 
 
-INCLUDE+=-I. -I../linalg/ -I../decomp/ -I../prox -I../dictLearn -I ../image  -I /data/weyer/opencv-2.4.13/modules/core/include -I /data/weyer/opencv-2.4.13/modules/highgui/include
+INCLUDE+=-I. -I../linalg/ -I../decomp/ -I../prox -I../dictLearn -I ../image  -I /data/weyer/opencv-2.4.13/modules/core/include -I /data/weyer/opencv-2.4.13/modules/highgui/include -I /data/weyer/opencv-2.4.13/modules/imgproc/include
 CXXFLAGS = -std=c++11 -fopenmp -g   -DNDEBUG -DUSE_BLAS_LIB $(INCLUDE)
 
 all: depend $(TARGETS)

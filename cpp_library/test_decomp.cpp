@@ -1,13 +1,14 @@
 #include "image.h"
+#include "dicts.h"
+#include "decomp.h"
+#include "cppspams.h"
+#include "linalg.h"
 
 #include <time.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
-
-
-using namespace cv;
-using namespace std;
 
 
 static struct timespec tstart, tend;
@@ -21,14 +22,16 @@ float delta_t(struct timespec &t1,struct timespec &t2) {
 
 std::map<std::string, std::string> TEST_IMAGE_PATHS = {
     { "boat", "../data/boat.png" },
+	{ "lena", "../data/lena.png"},
     { "grayscale_big", "../data/blackwhite.png" },
     { "grayscale_small", "../data/blackwhite_small.png" },
-    { "grayscale_medium", "../data/blackwhite_medium.png" }
+    { "grayscale_medium", "../data/blackwhite_medium.png" },
+    { "chess_medium", "../data/chess_medium.png"}
 };
 
 
 
-Image<double> cv2spams(Mat image) {
+Image<double> cv2spams(cv::Mat image) {
 	// Check if the provided cv image is a valid input
 	if(image.channels() != 1) {
 		throw "Cannot convert cv image with more than one channel to spams";
@@ -48,13 +51,13 @@ Image<double> cv2spams(Mat image) {
     return spams_image;
 }
 
-Mat spams2cv(Image<double> image) {
+cv::Mat spams2cv(Image<double> image) {
 	// Check if the provided spams image is a valid input
 	if(image.numChannels() != 1) {
 		throw "Cannot convert spams image with more than one channel to cv";
 	}
 
-	Mat cv_image(image.height(), image.width(), CV_64F);
+	cv::Mat cv_image(image.height(), image.width(), CV_64F);
 
 	//Manually copy data to spams image
 	int l = image.width() * image.height();
@@ -66,7 +69,7 @@ Mat spams2cv(Image<double> image) {
 }
 
 Image<double> readTestSpamsImage(string filepath) {
-    Mat cv_image = imread(filepath, -1);
+	cv::Mat cv_image = cv::imread(filepath, -1);
 
     if(cv_image.empty()) {
         throw "Could not open or find the cv image";
@@ -77,12 +80,12 @@ Image<double> readTestSpamsImage(string filepath) {
 }
 
 void displayTestSpamsImage(Image<double> spams_image) {
-    Mat cv_image = spams2cv(spams_image);
+	cv::Mat cv_image = spams2cv(spams_image);
     cv_image.convertTo(cv_image, CV_8U);
 
-    namedWindow("Display window", WINDOW_NORMAL);
-    imshow("Display window", cv_image);
-    waitKey(0);
+    cv::namedWindow("Display window", cv::WINDOW_NORMAL);
+    cv::imshow("Display window", cv_image);
+    cv::waitKey(0);
 }
 
 void test_scale() {
@@ -95,13 +98,13 @@ void test_scale() {
 
 void test_patches() {
 	Image<double> spams_image = readTestSpamsImage(
-		// Use big image as it seems that the patch functions have
-		// problems with very small images or patch sizes
+		// Use big image as it seems that the combinePatches function
+		// has problems with very small images
 		TEST_IMAGE_PATHS.at("boat")
 	);
 
 
-	int step = 20, patch_size = 20;
+	int patch_size = 20, step = patch_size;
 
 	Matrix<double> patches;
 	spams_image.extractPatches(patches, patch_size, step);
@@ -137,13 +140,58 @@ void test_patches() {
 	displayTestSpamsImage(spams_image);
 }
 
+void test_trainDL() {
+	cv::Mat cv_image = cv::imread(TEST_IMAGE_PATHS.at("chess_medium"), -1);
+
+    if(cv_image.empty()) {
+        throw "Could not open or find the cv image";
+    }
+    cv_image.convertTo(cv_image, CV_64F);
+
+    //Map from 0 - 255 to -0.5 to 0.5
+    //TODO Why is this needed
+    cv_image = (cv_image / 255) - 0.5;
+
+	Image<double> spams_image = cv2spams(cv_image);
+
+	//Extract patches
+	int patch_size = 2, step = patch_size;
+
+	Matrix<double> patches;
+	spams_image.extractPatches(patches, patch_size, step);
+
+	//Learn dictionary
+	int dict_width = 2; // Denoted as k in spams
+	Trainer<double> trainer(dict_width);
+	ParamDictLearn<double> param;
+	param.lambda = 1;
+	param.mode = (constraint_type) 3;
+	param.iter = 100;
+
+	trainer.train(patches, param);
+
+	//Dictionary matrix
+	Matrix<double> dictionary;
+	trainer.getD(dictionary);
+
+	patches.print("Patches - The columns should be either 0.5 or -0.5");
+	dictionary.print("Dictionary - The columns should be either 0.5 or -0.5");
+	Matrix<double> alpha;
+}
+
+void test_trainDL_edges() {
+
+}
+
 struct progs {
   const char *name;
   void (*prog)();
 } progs[] = {
     "scale", test_scale,
 	"patches", test_patches,
+	"trainDL", test_trainDL,
 };
+
 int main(int argc, char** argv) {
     for(int i = 1;i < argc;i++) {
         bool found = false;
