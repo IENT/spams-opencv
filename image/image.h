@@ -80,9 +80,9 @@ template<typename T> class Image : public Data<T> {
 
    private:
       /// Forbid lazy copies
-//      explicit Image<T>(const Image<T>& image);
+      explicit Image<T>(const Image<T>& image);
       /// Forbid lazy copies
-//      Image<T>& operator=(const Image<T>& image);
+      Image<T>& operator=(const Image<T>& image);
 
       /// is the data allocation external or not
       bool _externAlloc;

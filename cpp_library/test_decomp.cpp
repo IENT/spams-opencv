@@ -30,8 +30,7 @@ std::map<std::string, std::string> TEST_IMAGE_PATHS = {
 };
 
 
-
-Image<double> cv2spams(cv::Mat image) {
+Image<double>* cv2spams(cv::Mat image) {
 	// Check if the provided cv image is a valid input
 	if(image.channels() != 1) {
 		throw "Cannot convert cv image with more than one channel to spams";
@@ -40,35 +39,35 @@ Image<double> cv2spams(cv::Mat image) {
 		throw "Can only convert CV_64F ie. double images to spams";
 	}
 
-    Image<double> spams_image(image.cols, image.rows);
-	
+	Image<double>* spams_image = new Image<double>(image.cols, image.rows);
+
     //Manually copy data to spams image
     int l = image.cols * image.rows;
     for(int i = 0; i < l; i++) {
-    	(spams_image.rawX())[i] = image.at<double>(i);
+    	(spams_image->rawX())[i] = image.at<double>(i);
     }
-    
+
     return spams_image;
 }
 
-cv::Mat spams2cv(Image<double> image) {
+cv::Mat spams2cv(Image<double>* image) {
 	// Check if the provided spams image is a valid input
-	if(image.numChannels() != 1) {
+	if(image->numChannels() != 1) {
 		throw "Cannot convert spams image with more than one channel to cv";
 	}
 
-	cv::Mat cv_image(image.height(), image.width(), CV_64F);
+	cv::Mat cv_image(image->height(), image->width(), CV_64F);
 
 	//Manually copy data to spams image
-	int l = image.width() * image.height();
+	int l = image->height() * image->width();
 	for(int i = 0; i < l; i++) {
-		cv_image.at<double>(i) = image[i];
+		cv_image.at<double>(i) = (image->rawX())[i];
 	}
-	
+
     return cv_image;
 }
 
-Image<double> readTestSpamsImage(string filepath) {
+Image<double>* readTestSpamsImage(string filepath) {
 	cv::Mat cv_image = cv::imread(filepath, -1);
 
     if(cv_image.empty()) {
@@ -79,7 +78,7 @@ Image<double> readTestSpamsImage(string filepath) {
 	return cv2spams(cv_image);
 }
 
-void displayTestSpamsImage(Image<double> spams_image) {
+void displayTestSpamsImage(Image<double>* spams_image) {
 	cv::Mat cv_image = spams2cv(spams_image);
     cv_image.convertTo(cv_image, CV_8U);
 
@@ -89,15 +88,15 @@ void displayTestSpamsImage(Image<double> spams_image) {
 }
 
 void test_scale() {
-    Image<double> image = readTestSpamsImage(TEST_IMAGE_PATHS.at("boat"));
+    Image<double>* image = readTestSpamsImage(TEST_IMAGE_PATHS.at("boat"));
 
-    image.scal(0.75);
+    image->scal(0.75);
 
     displayTestSpamsImage(image);
 }
 
 void test_patches() {
-	Image<double> spams_image = readTestSpamsImage(
+	Image<double>* spams_image = readTestSpamsImage(
 		// Use big image as it seems that the combinePatches function
 		// has problems with very small images
 		TEST_IMAGE_PATHS.at("boat")
@@ -107,10 +106,10 @@ void test_patches() {
 	int patch_size = 20, step = patch_size;
 
 	Matrix<double> patches;
-	spams_image.extractPatches(patches, patch_size, step);
+	spams_image->extractPatches(patches, patch_size, step);
 
 	//Print patch matrices for small images
-	if(spams_image.width() <= 20) {
+	if(spams_image->width() <= 20) {
 		std:cout  << patches.m() << std::endl << patches.n() << std::endl;
 		patches.print("Untransformed Patches");
 		std::cout  << std::endl;
@@ -126,7 +125,7 @@ void test_patches() {
 	}
 
 	//Print transformed patch matrices for small images
-	if(spams_image.width() <= 20) {
+	if(spams_image->width() <= 20) {
 		std::cout  << std::endl;
 		patches.print("Transformed Patches");
 		std::cout  << std::endl;
@@ -134,7 +133,7 @@ void test_patches() {
 
 	//Interpolate 1 to 1 between the patches and the original image
 	//resulting in a chess board type effect
-	spams_image.combinePatches(patches, 1, step, true);
+	spams_image->combinePatches(patches, 1, step, true);
 
 	//Convert to cv image and render
 	displayTestSpamsImage(spams_image);
@@ -152,13 +151,13 @@ void test_trainDL() {
     //TODO Why is this needed
     cv_image = (cv_image / 255) - 0.5;
 
-	Image<double> spams_image = cv2spams(cv_image);
+	Image<double>* spams_image = cv2spams(cv_image);
 
 	//Extract patches
 	int patch_size = 2, step = patch_size;
 
 	Matrix<double> patches;
-	spams_image.extractPatches(patches, patch_size, step);
+	spams_image->extractPatches(patches, patch_size, step);
 
 	//Learn dictionary
 	int dict_width = 2; // Denoted as k in spams
