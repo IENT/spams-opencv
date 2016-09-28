@@ -112,9 +112,7 @@ cv::Mat spams2cv(Matrix<double>* spams_matrix) {
 	return cv_image;
 }
 
-
-
-Image<double>* readTestSpamsImage(string filepath) {
+cv::Mat readCvImage(string filepath) {
 	cv::Mat cv_image = cv::imread(filepath, -1);
 
     if(cv_image.empty()) {
@@ -122,7 +120,11 @@ Image<double>* readTestSpamsImage(string filepath) {
     }
     cv_image.convertTo(cv_image, CV_64F);
     
-	return cv2spams_image(cv_image);
+    return cv_image;
+}
+
+Image<double>* readTestSpamsImage(string filepath) {
+	return cv2spams_image(readCvImage(filepath));
 }
 
 void displayTestSpamsImage(Image<double>* spams_image) {
@@ -187,26 +189,21 @@ void test_patches() {
 }
 
 void test_trainDL() {
-	cv::Mat cv_image = cv::imread(TEST_IMAGE_PATHS.at("chess_medium"), -1);
+	cv::Mat cv_image = readCvImage(TEST_IMAGE_PATHS.at("boat"));
+    //Map from 0 - 255 to -128 - 127
+    cv_image = cv_image - 128;
 
-    if(cv_image.empty()) {
-        throw "Could not open or find the cv image";
-    }
-    cv_image.convertTo(cv_image, CV_64F);
-
-    //Map from 0 - 255 to -0.5 to 0.5
-    //TODO Why is this needed
-    cv_image = (cv_image / 255) - 0.5;
-
-	Image<double>* spams_image = cv2spams_image(cv_image);
-
-	//Extract patches
+	//Extract non-overlapping patches from image
 	int patch_size = 2, step = patch_size;
 
+	Image<double>* spams_image = cv2spams_image(cv_image);
 	Matrix<double> patches;
-	spams_image->extractPatches(patches, patch_size, step);
 
-	//Learn dictionary
+	spams_image->extractPatches(patches, patch_size, step);
+	delete spams_image;
+
+	//Learn dictionary with l0 norm constraint by one eg. only find only one
+	//representation
 	int dict_width = 2; // Denoted as k in spams
 	Trainer<double> trainer(dict_width);
 	ParamDictLearn<double> param;
@@ -216,17 +213,97 @@ void test_trainDL() {
 
 	trainer.train(patches, param);
 
-	//Dictionary matrix
+	//Print dictionary and patches
 	Matrix<double> dictionary;
 	trainer.getD(dictionary);
 
 	patches.print("Patches - The columns should be either 0.5 or -0.5");
 	dictionary.print("Dictionary - The columns should be either 0.5 or -0.5");
-	Matrix<double> alpha;
 }
 
+/// This is a cpp version of the coresponding matlab demo code and the results
+/// can be compared with the latter
 void test_trainDL_edges() {
+	cv::Mat cv_image = readCvImage(TEST_IMAGE_PATHS.at("lena"));
 
+    //Extract patches
+	int patch_size = 8, step = 1;
+
+	Image<double>* spams_image = cv2spams_image(cv_image);
+	Matrix<double>* patches = new Matrix<double>();
+
+	spams_image->extractPatches(*patches, patch_size, step);
+	delete spams_image;
+
+	//Substract mean from patches and normalize by l2-norm
+	cv::Mat cv_patches = spams2cv(patches);
+
+	cv_patches = cv_patches / 255;
+	for(int i = 0; i < cv_patches.cols; i++) {
+		cv_patches.col(i) = cv_patches.col(i) - cv::mean(cv_patches.col(i))[0];
+		cv_patches.col(i) = cv_patches.col(i) / cv::norm(cv_patches.col(i));
+	}
+
+	//Override original patches with the ones transformed by opencv
+	patches = cv2spams_matrix(cv_patches);
+
+	//Learn dictionary
+	int dict_width = 256;
+	if (dict_width % 8 != 0) {
+		throw "Only multiples of 8 can be used as dict width";
+	}
+	Trainer<double> trainer(dict_width, 400);
+	ParamDictLearn<double> param;
+	param.lambda = 0.15;
+	param.iter = 1000;
+	param.verbose = true;
+
+	trainer.train(*patches, param);
+
+	//Combine dictionary columns to patches and convert to cv image
+	Matrix<double> dictionary;
+	trainer.getD(dictionary);
+
+	int cols = 16 * patch_size, rows = dict_width / 16 * patch_size;
+	Image<double>* spams_image_dictionary = new Image<double>(cols, rows);
+
+	spams_image_dictionary->combinePatches(dictionary, 0, patch_size, false);
+
+	cv::Mat cv_image_dictionary = spams2cv(spams_image_dictionary);
+	delete spams_image_dictionary;
+
+	//Rescale cv dictionary for display
+	cv_image_dictionary = (cv_image_dictionary + 1) * 128;
+	cv_image_dictionary.convertTo(cv_image_dictionary, CV_8U);
+
+	//Display
+	cv::namedWindow("Display window", cv::WINDOW_NORMAL);
+    cv::imshow("Display window", cv_image_dictionary);
+    cv::waitKey(0);
+
+    //Fit the patches with the dictionary resulting in the corresponding alphas
+    Matrix<double> *path, alpha;
+    SpMatrix<double> *sparse_alpha = cppLasso(*patches, dictionary, &path, false, 10, 0.15);
+    sparse_alpha->toFull(alpha);
+    delete sparse_alpha, patches;
+
+    //Convert alphas and dictionary to cv and calculate residue between coding and
+    //original image
+	cv::Mat cv_alpha = spams2cv(&alpha), cv_dictionary = spams2cv(&dictionary);
+
+	cv::Mat powers, sum_difference, sum_alpha;
+
+	//Calculate square of difference between coding and original
+	cv::pow(cv_patches - cv_dictionary * cv_alpha, 2, powers);
+	//Calculate column sums
+	cv::reduce(powers, sum_difference, 0, CV_REDUCE_SUM, CV_64F);
+	cv::reduce(cv::abs(cv_alpha), sum_alpha, 0, CV_REDUCE_SUM, CV_64F);
+	//Calculate residue as mean of the addition of the two sums
+	double residue = cv::mean(0.5 * sum_difference + param.lambda * sum_alpha)[0];
+
+	//Print residue
+	cout << std::endl << std::endl
+		 << "Residue of image and dictionary coding is: " << residue << std::endl;
 }
 
 struct progs {
@@ -235,7 +312,8 @@ struct progs {
 } progs[] = {
     "scale", test_scale,
 	"patches", test_patches,
-	"trainDL", test_trainDL,
+	"dictionary", test_trainDL,
+	"dictionary_edges", test_trainDL_edges,
 };
 
 int main(int argc, char** argv) {
