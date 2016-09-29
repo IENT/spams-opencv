@@ -264,22 +264,24 @@ void test_trainDL_edges() {
 	Matrix<double> dictionary;
 	trainer.getD(dictionary);
 
-	int cols = 16 * patch_size, rows = dict_width / 16 * patch_size;
+	cv::Mat cv_dictionary = spams2cv(&dictionary);
+	Matrix<double>* dictionary_transformed = cv2spams_matrix((cv_dictionary + 1) * 128);
+
+	int patches_per_column = 16,
+		cols = patches_per_column * patch_size + (patches_per_column - 1),
+		rows = dict_width / 16 * patch_size + (patches_per_column - 1) ;
 	Image<double>* spams_image_dictionary = new Image<double>(cols, rows);
 
-	spams_image_dictionary->combinePatches(dictionary, 0, patch_size, false);
+	spams_image_dictionary->combinePatches(*dictionary_transformed, 0, patch_size + 1, false);
 
 	cv::Mat cv_image_dictionary = spams2cv(spams_image_dictionary);
 	delete spams_image_dictionary;
 
-	//Rescale cv dictionary for display
-	cv_image_dictionary = (cv_image_dictionary + 1) * 128;
+	//Display
 	cv_image_dictionary.convertTo(cv_image_dictionary, CV_8U);
 
-	//Display
 	cv::namedWindow("Display window", cv::WINDOW_NORMAL);
     cv::imshow("Display window", cv_image_dictionary);
-    cv::waitKey(0);
 
     //Fit the patches with the dictionary resulting in the corresponding alphas
     Matrix<double> *path, alpha;
@@ -289,7 +291,7 @@ void test_trainDL_edges() {
 
     //Convert alphas and dictionary to cv and calculate residue between coding and
     //original image
-	cv::Mat cv_alpha = spams2cv(&alpha), cv_dictionary = spams2cv(&dictionary);
+	cv::Mat cv_alpha = spams2cv(&alpha);
 
 	cv::Mat powers, sum_difference, sum_alpha;
 
@@ -304,6 +306,9 @@ void test_trainDL_edges() {
 	//Print residue
 	cout << std::endl << std::endl
 		 << "Residue of image and dictionary coding is: " << residue << std::endl;
+
+	//Block for display window
+    cv::waitKey(0);
 }
 
 struct progs {
