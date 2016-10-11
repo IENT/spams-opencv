@@ -495,7 +495,8 @@ Matrix<T> *_fistaFlat(Matrix<T> *X,AbstractMatrixB<T> *D,Matrix<T> *alpha0,
 	     Vector<T> *inner_weights,
 	     int size_group,
 	     bool sqrt_step,
-	     bool transpose
+	     bool transpose,
+             int linesearch_mode
 )
 throw(const char *) 
 {
@@ -507,6 +508,7 @@ using namespace FISTA;
  int pAlpha = alpha0->m();
  int nAlpha = alpha0->n();
   FISTA::ParamFISTA<T> param;
+  param.num_threads = (num_threads < 0) ? -1 : num_threads;
   param.max_it = max_it;
   param.L0 = L0;
   param.fixed_step = fixed_step;
@@ -556,6 +558,7 @@ using namespace FISTA;
     strcpy(param.logName,logName);
   }
   param.ista = ista;
+  param.linesearch_mode=linesearch_mode;
   param.subgrad = subgrad;
   param.is_inner_weights = is_inner_weights;
 
@@ -593,7 +596,6 @@ using namespace FISTA;
       param.num_threads =  MIN(MAX_THREADS,omp_get_num_procs());
 #endif
    }
-
    if (param.regul==GRAPH || param.regul==GRAPHMULT) 
     throw("Error: fistaGraph should be used instead");
   if (param.regul==TREE_L0 || param.regul==TREEMULT || param.regul==TREE_L2 || param.regul==TREE_LINF) 
@@ -644,7 +646,8 @@ Matrix<T> *_fistaTree(
 	     Vector<T> *inner_weights,
 	     int size_group,
 	     bool sqrt_step,
-	     bool transpose
+	     bool transpose,
+             int linesearch_mode
 )
 throw(const char *) 
 {
@@ -656,6 +659,7 @@ using namespace FISTA;
  int pAlpha = alpha0->m();
  int nAlpha = alpha0->n();
   FISTA::ParamFISTA<T> param;
+  param.num_threads = (num_threads < 0) ? -1 : num_threads;
   param.max_it = max_it;
   param.L0 = L0;
   param.fixed_step = fixed_step;
@@ -697,6 +701,7 @@ using namespace FISTA;
     strcpy(param.logName,logName);
   }
   param.ista = ista;
+  param.linesearch_mode=linesearch_mode;
   param.subgrad = subgrad;
   param.is_inner_weights = is_inner_weights;
 
@@ -808,7 +813,8 @@ Matrix<T> *_fistaGraph(
 	     Vector<T> *inner_weights,
 	     int size_group,
 	     bool sqrt_step,
-	     bool transpose
+	     bool transpose,
+             int linesearch_mode
 )
 throw(const char *) 
 {
@@ -821,6 +827,7 @@ throw(const char *)
   int pAlpha = alpha0->m();
   int nAlpha = alpha0->n();
   FISTA::ParamFISTA<T> param;
+  param.num_threads = (num_threads < 0) ? -1 : num_threads;
   param.max_it = max_it;
   param.L0 = L0;
   param.fixed_step = fixed_step;
@@ -862,6 +869,7 @@ throw(const char *)
     strcpy(param.logName,logName);
   }
   param.ista = ista;
+  param.linesearch_mode=linesearch_mode;
   param.subgrad = subgrad;
   param.is_inner_weights = is_inner_weights;
 
@@ -955,7 +963,7 @@ using namespace FISTA;
   strncpy(param.name_regul,name_regul,param.length_names);
   if (param.regul==GRAPH || param.regul==GRAPHMULT) 
     throw("proximalFlat : proximalGraph should be used instead");
-  param.num_threads = (num_threads < 0) ? 1 : num_threads;
+  param.num_threads = (num_threads < 0) ? -1 : num_threads;
   param.lambda = lambda1;
   param.lambda2 = lambda2;
   param.lambda3 = lambda3;
@@ -1010,7 +1018,7 @@ throw(const char *)
 using namespace FISTA;
   FISTA::ParamFISTA<T> param;
   param.regul = regul_from_string(name_regul);
-  param.num_threads = (num_threads < 0) ? 1 : num_threads;
+  param.num_threads = (num_threads < 0) ? -1 : num_threads;
   param.lambda = lambda1;
   param.lambda2 = lambda2;
   param.lambda3 = lambda3;
@@ -1097,7 +1105,7 @@ using namespace FISTA;
   if (param.regul==TREEMULT && abs<T>(param.lambda2 - 0) < 1e-20) {
       throw("proximalGraph error: with multi-task-graph, lambda2 should be > 0");
   }
-  param.num_threads = (num_threads < 0) ? 1 : num_threads;
+  param.num_threads = (num_threads < 0) ? -1 : num_threads;
   param.lambda = lambda1;
   param.lambda2 = lambda2;
   param.lambda3 = lambda3;
@@ -1242,7 +1250,8 @@ Matrix<T> *_alltrainDL(Data<T> *X,bool in_memory, Matrix<T> **omA,Matrix<T> **om
     throw("structTrainDL error: with multi-task-tree, lambda2 should be > 0");
 
   /* graph */
-  GraphStruct<T> *pgraph = (GraphStruct<T> *) 0;
+  GraphStruct<T> *pgraph =NULL;
+  //GraphStruct<T> *pgraph = (GraphStruct<T> *) 0;
   GraphStruct<T> graph;
   if (param.regul==FISTA::GRAPH || param.regul==FISTA::GRAPH_RIDGE || 
       param.regul==FISTA::GRAPH_L2) {
@@ -1269,7 +1278,7 @@ Matrix<T> *_alltrainDL(Data<T> *X,bool in_memory, Matrix<T> **omA,Matrix<T> **om
   }
   /* tree */
   TreeStruct<T> tree;
-  TreeStruct<T> *ptree = (TreeStruct<T> *) 0;
+  TreeStruct<T> *ptree = NULL; //(TreeStruct<T> *) 0;
   tree.Nv=0;
   int num_groups = own_variables->n();
   if (param.regul==FISTA::TREE_L0 || param.regul==FISTA::TREE_L2 || param.regul==FISTA::TREE_LINF) {
@@ -1300,8 +1309,11 @@ Matrix<T> *_alltrainDL(Data<T> *X,bool in_memory, Matrix<T> **omA,Matrix<T> **om
   /* */
   if (in_memory)
     trainer->trainOffline(*X,param);
-  else
-    trainer->train(*X,param,pgraph,ptree);
+  else if (ptree || pgraph) {
+    trainer->train_fista(*X,param,pgraph,ptree);
+  } else {
+    trainer->train(*X,param);
+  }
   if (param.log) delete[](param.logName);
   Matrix<T> *D = new Matrix<T>();
   trainer->getD((Matrix<T> &)(*D));

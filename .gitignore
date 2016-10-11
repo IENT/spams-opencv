@@ -1,3 +1,4 @@
+
 s (26 sloc) 270 Bytes
 # Prerequisites
 *.d
@@ -34,5 +35,5 @@ s (26 sloc) 270 Bytes
 
 *~
 
-cpp_library/bin/*
-cpp_library/bin
+/Release/
+/Debug/
