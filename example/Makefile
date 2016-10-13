@@ -1,13 +1,14 @@
-TARGETS= ../bin/test
+OPENCV_PATH = /tools/opencv/opencv-2.4.12/release-xenial
+
+TARGETS= ../bin/example
 LIBS= -lstdc++ -lblas -llapack \
-    -L /tools/opencv/opencv-2.4.12/release-xenial/lib/ \
-    -lopencv_core -lopencv_highgui -lopencv_imgproc
-SRCS= test.cpp
+    -L $(OPENCV_PATH)/lib/ -lopencv_core -lopencv_highgui -lopencv_imgproc
+SRCS= example.cpp
 
 INCLUDE+=-I. \
     -I../spams/cppspams -I../spams/linalg/ -I../spams/decomp/ -I../spams/prox \
     -I../spams/dictLearn -I ../spams/image -I ../spams/cvspams \
-    -I /tools/opencv/opencv-2.4.12/release-xenial/include
+    -I $(OPENCV_PATH)/include
 CXXFLAGS = -std=c++11 -fopenmp -g   -DNDEBUG -DUSE_BLAS_LIB $(INCLUDE)
 
 all: depend $(TARGETS)
@@ -20,7 +21,7 @@ clean:
 %.o : %.cpp 
 	$(CXX) -c $(CXXFLAGS) $<
 
-../bin/test: test.o 
+../bin/example: example.o 
 	$(CXX) $(CXXFLAGS) -o $@  $< $(LIBS)
 
 # Dependencies
