@@ -5,8 +5,8 @@ LIBS= -lstdc++ -lblas -llapack \
 SRCS= test.cpp
 
 INCLUDE+=-I. \
-    -I../spams/cpp -I../spams/linalg/ -I../spams/decomp/ -I../spams/prox \
-    -I../spams/dictLearn -I ../spams/image \
+    -I../spams/cppspams -I../spams/linalg/ -I../spams/decomp/ -I../spams/prox \
+    -I../spams/dictLearn -I ../spams/image -I ../spams/cvspams \
     -I /tools/opencv/opencv-2.4.12/release-xenial/include
 CXXFLAGS = -std=c++11 -fopenmp -g   -DNDEBUG -DUSE_BLAS_LIB $(INCLUDE)
 
