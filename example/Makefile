@@ -1,4 +1,4 @@
-OPENCV_PATH = /tools/opencv/opencv-2.4.12/release-xenial
+OPENCV_PATH = ../../opencv
 
 TARGETS= ../bin/example
 LIBS= -lstdc++ -lblas -llapack \
