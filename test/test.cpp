@@ -13,12 +13,12 @@
 
 
 std::map<std::string, std::string> TEST_IMAGE_PATHS = {
-    { "boat", "../data/boat.png" },
-	{ "lena", "../data/lena.png"},
-    { "grayscale_big", "../data/blackwhite.png" },
-    { "grayscale_small", "../data/blackwhite_small.png" },
-    { "grayscale_medium", "../data/blackwhite_medium.png" },
-    { "chess_medium", "../data/chess_medium.png"}
+    { "boat", "data/boat.png" },
+	{ "lena", "data/lena.png"},
+    { "grayscale_big", "data/blackwhite.png" },
+    { "grayscale_small", "data/blackwhite_small.png" },
+    { "grayscale_medium", "data/blackwhite_medium.png" },
+    { "chess_medium", "data/chess_medium.png"}
 };
 
 
