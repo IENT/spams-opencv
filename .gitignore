@@ -35,6 +35,7 @@ s (26 sloc) 270 Bytes
 
 *~
 
-/Release/
-/Debug/
-*/bin/*
+bin/
+.cproject
+.depend
+depend
