@@ -256,8 +256,8 @@ void test_trainDL_edges() {
 	Matrix<double> dictionary;
 	trainer.getD(dictionary);
 
-	cv::Mat cv_dictionary = (spams2cv(&dictionary) + 1) * 128;
-	Matrix<double>* dictionary_transformed = cv2spams_matrix(cv_dictionary);
+	cv::Mat cv_dictionary_scaled = (spams2cv(&dictionary) + 1) * 128;
+	Matrix<double>* dictionary_transformed = cv2spams_matrix(cv_dictionary_scaled);
 
 	int patches_per_column = 16,
 		cols = patches_per_column * patch_size + (patches_per_column - 1),
@@ -283,7 +283,7 @@ void test_trainDL_edges() {
 
     //Convert alphas and dictionary to cv and calculate residue between coding and
     //original image
-	cv::Mat cv_alpha = spams2cv(&alpha);
+	cv::Mat cv_alpha = spams2cv(&alpha), cv_dictionary = spams2cv(&dictionary);
 
 	cv::Mat powers, sum_difference, sum_alpha;
 
