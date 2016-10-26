@@ -20,7 +20,7 @@ float delta_t(struct timespec &t1,struct timespec &t2) {
   return t;
 }
 
-static const string TEST_IMAGE_PATH = "../data/boat.png";
+//static const string TEST_IMAGE_PATH = "../data/boat.png";
 //static const string TEST_IMAGE_PATH = "../data/blackwhite.png";
 //static const string TEST_IMAGE_PATH = "../data/blackwhite_small.png";
 
@@ -83,55 +83,53 @@ void test_lasso() {
     delete spa;
 }
 
-Image<double>* cv2spams(Mat image) {
-    Image<double>* spams_image = new Image<double>(image.cols, image.rows, image.channels());
+template<typename I, typename O> Image<O> cv2spams(Mat_<I> image) {
+    Image<O> spams_image(image.cols, image.rows, image.channels());
 	
     //Manually copy data to spams image
-    double* X = spams_image->rawX();
     int l = image.cols * image.rows * image.channels();
     for(int i = 0; i < l; i++) {
-//    	cout << (double) image.data[i] << std::endl;
-        X[i] = (double) image.data[i];
+    	cout << image(i) << std::endl;
+    	(spams_image.rawX())[i] = (O) image(i);
     }
     
     return spams_image;
 }
 
-Mat spams2cv(Image<double>* image) {
-	Mat cv_image(image->height(), image->width(), image->numChannels());
-	
-    //Manually copy data to spams image
-	int l = image->width() * image->height() * image->numChannels();
+template<typename I, typename O> Mat_<O> spams2cv(Image<I> image) {
+	Mat_<O> cv_image(image.height(), image.width());
+	//Manually copy data to spams image
+	int l = image.width() * image.height() * image.numChannels();
 	for(int i = 0; i < l; i++) {
-		cv_image.data[i] = (double) (*image)[i];
+		cv_image(i) = (O) image[i];
 	}
 	
     return cv_image;
 }
 
-Image<double>* readImage(string filepath) {
-    Mat cv_input = imread(filepath, CV_LOAD_IMAGE_GRAYSCALE);
+template<typename T> Image<T> readImage(string filepath) {
+    Mat cv_input = imread(filepath, -1);
 
-    if(! cv_input.data) {
+    if(cv_input.empty()) {
         throw "Could not open or find the image";
     }
-    //Astonishingly, this breaks everything
-//    cv_input.convertTo(cv_input, CV_64F);
+    //TODO template function correctly or removed it
+    cv_input.convertTo(cv_input, CV_64F);
     
-	return cv2spams(cv_input);
+	return cv2spams<T, T>(cv_input);
 }
 
 void test_scale() {
-    Image<double>* image = readImage(TEST_IMAGE_PATH);
+    Image<double> image = readImage<double>(TEST_IMAGE_PATH);
 
-//    image->scal(0.5);
+//    image.scal(0.5);
 
-    Mat cv_output = spams2cv(image);
-    cv_output.convertTo(cv_output, CV_8U);
-    
+    Mat cv_output = spams2cv<double, unsigned char>(image);
+//    cv_output.convertTo(cv_output, CV_8UC1);
+
     namedWindow("Display window", WINDOW_NORMAL);
     imshow("Display window", cv_output);
-
+//
     waitKey(0);
 }
 
