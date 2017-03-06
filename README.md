@@ -1,6 +1,6 @@
 # OpenCV SPAMS Interface
 
-This repostory contains a small set of conversion functions between OpenCV and SPAMS as well as a few examples how to use spams from cpp with opencv.
+This repostory contains a small set of conversion functions between OpenCV and SPAMS as well as a few examples how to use spams from cpp with opencv. Of course you need opencv installed.
 
 ## Build Instructions
 
